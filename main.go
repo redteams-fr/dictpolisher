@@ -19,7 +19,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var outputFilePath = "./output/filteredPasswords.txt"
+	var outputFilePath = OUTPUT_DIR + "/filteredPasswords.txt"
 
 	if _, err := os.Stat(outputFilePath); !os.IsNotExist(err) {
 		// Ask the user if they want to overwrite the existing file

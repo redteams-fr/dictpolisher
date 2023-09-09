@@ -12,22 +12,29 @@ import (
 	"unicode"
 )
 
+const DICT_DIR = "./dict"
+const OUTPUT_DIR = "./output"
+const BATCH_SIZE = 50000
+
+
 func selectPasswordFile() (string, error) {
-    // Check if the 'dict' directory exists
-    if _, err := os.Stat("./dict"); os.IsNotExist(err) {
+    
+    if _, err := os.Stat(DICT_DIR); os.IsNotExist(err) {
         return "", fmt.Errorf("\n[!] The 'dict' directory does not exist.")
     }
-
-	// List all dictionaries found
-	files, err := ioutil.ReadDir("./dict")
-	if err != nil {
+	
+	dict_files, err := ioutil.ReadDir(DICT_DIR)
+	if len(dict_files) == 0 {
+		fmt.Println("\n[!] The 'dict' directory is empty. At least one password dictionary should be present.")
+		os.Exit(1)
+	} else if err != nil {
 		return "", fmt.Errorf("\n[!] Error reading the 'dict' directory: %v", err)
 	}
 
 	for {
 		fmt.Println("\nPlease choose a password dictionary from the following options :")
 		fmt.Println("0. merge all dictionaries below")
-		for i, file := range files {
+		for i, file := range dict_files {
 			fmt.Printf("%d. %s\n", i+1, file.Name())
 		}
 
@@ -37,8 +44,8 @@ func selectPasswordFile() (string, error) {
 		
 		if choice == 0 {
 			return "MERGE_ALL", nil
-		} else if choice > 0 && choice <= len(files) {
-			return "./dict/" + files[choice-1].Name(), nil
+		} else if choice > 0 && choice <= len(dict_files) {
+			return "./dict/" + dict_files[choice-1].Name(), nil
 		} else {
 			fmt.Println("\nInvalid choice. Please try again.")
 		}
@@ -46,9 +53,8 @@ func selectPasswordFile() (string, error) {
 }
 
 
-
 func parsePasswordFile(path string, cfg *Config,outputFilePath string ) (int, int, error) {
-	batchSize := 50000
+	
 	fmt.Println("Processing started, parsing ",path)
 	
 	totalPasswords := 0
@@ -95,7 +101,7 @@ func parsePasswordFile(path string, cfg *Config,outputFilePath string ) (int, in
 		}
 
 		// If cache is full write
-		if len(batch) >= batchSize {
+		if len(batch) >= BATCH_SIZE {
 			err = saveValidPasswords(batch,outputFilePath)
 			if err != nil {
 				return totalPasswords, validPasswords, err
@@ -218,7 +224,7 @@ func mergeDictionaries() (string, error) {
 
     wg.Wait()
 
-    mergedFilePath := "./output/dicts_merged.txt"
+    mergedFilePath := OUTPUT_DIR+"/dicts_merged.txt"
     f, err := os.Create(mergedFilePath)
     if err != nil {
         return "", fmt.Errorf("\n[!] Error creating the merged file: %v", err)
